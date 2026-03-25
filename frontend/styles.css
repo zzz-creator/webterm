@@ -1,0 +1,31 @@
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: #0f111a;
+  color: #e6edf3;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+.app-shell {
+  max-width: 980px;
+  margin: 32px auto;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 30%);
+}
+
+.app-header {
+  padding: 12px 16px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  font-weight: 600;
+}
+
+#terminal {
+  height: min(72vh, 700px);
+  padding: 12px;
+}
