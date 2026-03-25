@@ -6,8 +6,8 @@ Users can type text into the browser terminal, but they **cannot access a shell*
 ## Security Model
 
 - Terminal is visual-only (xterm.js UI), not a real shell.
-- Backend only accepts `POST /run` with raw input text.
-- Every request executes exactly one admin-controlled file: `backend/script.py`.
+- Backend supports both `POST /run` for one-shot execution and `GET /ws/run` for an interactive terminal stream.
+- Every session executes exactly one admin-controlled file: `backend/script.py`.
 - No command parsing, no file selection, no user code execution.
 - Execution is sandboxed in Docker with:
   - network disabled (`--network none`)
@@ -36,7 +36,7 @@ backend/
 
 ## Backend API
 
-### `POST /run`
+### `POST /run` (optional one-shot mode)
 
 Request:
 
@@ -54,6 +54,15 @@ Response:
   "error": "..."
 }
 ```
+
+
+### `GET /ws/run`
+
+WebSocket endpoint for interactive terminal behavior.
+
+- Browser sends keystrokes directly to the hidden Python process stdin.
+- Backend streams stdout/stderr output back to the terminal.
+- Users can interact with script prompts but cannot view script source from the UI.
 
 ### `GET /health`
 

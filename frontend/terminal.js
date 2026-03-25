@@ -1,4 +1,5 @@
 const API_BASE = window.API_BASE_URL || "http://localhost:8000";
+const WS_BASE = API_BASE.replace(/^http/i, "ws");
 
 const term = new Terminal({
   convertEol: true,
@@ -11,81 +12,41 @@ const term = new Terminal({
 });
 
 term.open(document.getElementById("terminal"));
+term.writeln("Controlled execution mode.");
+term.writeln("Only the hidden admin Python script is interactive.");
+term.writeln("");
 
-const PROMPT = "> ";
-let currentLine = "";
-let busy = false;
+let ws;
+let connected = false;
 
-function printPrompt() {
-  term.write(`\r\n${PROMPT}`);
+function connect() {
+  ws = new WebSocket(`${WS_BASE}/ws/run`);
+
+  ws.onopen = () => {
+    connected = true;
+    term.writeln("[connected]");
+  };
+
+  ws.onmessage = (event) => {
+    term.write(event.data);
+  };
+
+  ws.onerror = () => {
+    term.writeln("\r\n[connection error]");
+  };
+
+  ws.onclose = () => {
+    connected = false;
+    term.writeln("\r\n[disconnected]");
+    term.writeln("Reload page to start a new session.");
+  };
 }
-
-async function submitInput(input) {
-  busy = true;
-  term.write("\r\n[processing...]\r\n");
-
-  try {
-    const response = await fetch(`${API_BASE}/run`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input }),
-    });
-
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}));
-      const message = errBody.detail || `Request failed (${response.status})`;
-      term.writeln(`error: ${message}`);
-      return;
-    }
-
-    const data = await response.json();
-    if (data.output) {
-      term.writeln(data.output);
-    }
-    if (data.error) {
-      term.writeln(`stderr: ${data.error}`);
-    }
-  } catch (error) {
-    term.writeln(`error: ${error.message}`);
-  } finally {
-    busy = false;
-    printPrompt();
-  }
-}
-
-term.write("Controlled execution mode. Only admin script runs.");
-term.write(`\r\n${PROMPT}`);
 
 term.onData((data) => {
-  if (busy) {
+  if (!connected || !ws || ws.readyState !== WebSocket.OPEN) {
     return;
   }
-
-  const code = data.charCodeAt(0);
-
-  if (code === 13) {
-    const captured = currentLine;
-    currentLine = "";
-    submitInput(captured);
-    return;
-  }
-
-  if (code === 127) {
-    if (currentLine.length > 0) {
-      currentLine = currentLine.slice(0, -1);
-      term.write("\b \b");
-    }
-    return;
-  }
-
-  if (code < 32) {
-    return;
-  }
-
-  if (currentLine.length >= 1024) {
-    return;
-  }
-
-  currentLine += data;
-  term.write(data);
+  ws.send(data);
 });
+
+connect();
