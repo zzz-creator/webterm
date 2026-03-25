@@ -1,22 +1,32 @@
-"""Admin-controlled Python script executed for every user request.
+"""Admin-controlled Python script executed for every user session.
 
-This is intentionally the only script that the runner executes.
+Users interact with this script through a terminal-like browser UI,
+but cannot view or modify this source from the app.
 """
-
-import sys
 
 
 def main() -> None:
-    user_input = sys.stdin.read().strip()
+    print("Connected to secure Python runner.")
+    print("Type text and press Enter. Type 'exit' to end the session.")
 
-    if not user_input:
-        print("No input provided.")
-        return
+    while True:
+        try:
+            user_input = input("python> ")
+        except EOFError:
+            break
 
-    # Example controlled behavior; replace with your business logic.
-    print(f"Received: {user_input}")
-    print(f"Uppercase: {user_input.upper()}")
-    print(f"Length: {len(user_input)}")
+        text = user_input.strip()
+        if not text:
+            print("(empty input)")
+            continue
+
+        if text.lower() in {"exit", "quit"}:
+            print("Goodbye.")
+            break
+
+        print(f"echo: {text}")
+        print(f"upper: {text.upper()}")
+        print(f"chars: {len(text)}")
 
 
 if __name__ == "__main__":
